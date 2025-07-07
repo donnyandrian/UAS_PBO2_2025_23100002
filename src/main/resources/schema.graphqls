@@ -1,0 +1,19 @@
+type VisitLog {
+    id: ID!
+    studentName: String!
+    studentId: String!
+    studyProgram: String!
+    purpose: String!
+    visitTime: String!
+}
+
+type Query {
+    allVisitLogs: [VisitLog]
+    logById(id: ID!): VisitLog
+}
+
+type Mutation {
+    addVisitLog(studentName: String!, studentId: String!, studyProgram: String!, purpose: String!): VisitLog
+    updateVisitLog(id: ID!, studentName: String!, studentId: String!, studyProgram: String!, purpose: String!): VisitLog
+    deleteVisitLog(id: ID!): Boolean
+}

@@ -8,8 +8,13 @@ package com.mycompany.mavenproject4;
  *
  * @author ASUS
  */
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Component;
+
+import javax.swing.DefaultCellEditor;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JOptionPane;
+import javax.swing.JTable;
 
 class ButtonEditor extends DefaultCellEditor {
     private JButton button;
@@ -21,6 +26,9 @@ class ButtonEditor extends DefaultCellEditor {
         button = new JButton();
         button.setOpaque(true);
         button.addActionListener(e -> fireEditingStopped());
+        button.addActionListener(e -> {
+            System.out.println("test");
+        });
     }
 
     @Override

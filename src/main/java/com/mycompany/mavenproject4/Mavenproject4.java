@@ -9,12 +9,38 @@ package com.mycompany.mavenproject4;
  * @author ASUS
  */
 
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+import javax.swing.table.DefaultTableModel;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class Mavenproject4 extends JFrame {
 
@@ -29,6 +55,8 @@ public class Mavenproject4 extends JFrame {
     private JButton clearButton;
     
     private boolean actionColumnsAdded = false;
+
+    private List<Object> temp = new ArrayList<>();
 
     public Mavenproject4() {
         setTitle("Library Visit Log");
@@ -57,6 +85,8 @@ public class Mavenproject4 extends JFrame {
         inputPanel.add(addButton);
         inputPanel.add(clearButton);
 
+        addButton.addActionListener(e -> addEntry());
+
         add(inputPanel, BorderLayout.NORTH);
 
         String[] columns = {"Waktu Kunjungan", "NIM", "Nama", "Program Studi", "Tujuan Kunjungan"};
@@ -82,12 +112,104 @@ public class Mavenproject4 extends JFrame {
             }
         });
     }
+
+    private void loadEntries() {
+        try {
+            String query = "query { allVisitLogs { id studentName studentId studyProgram purpose visitTime } }";
+            String response = sendGraphQLRequest(query);
+
+            
+            JsonObject jsonObject = JsonParser.parseString(response).getAsJsonObject();
+            JsonObject data = jsonObject.get("data").getAsJsonObject();
+            
+            // This is the real data we need
+            JsonArray allVisitLogs = data.get("allVisitLogs").getAsJsonArray();
+            
+            // model is the DefaultTableModel
+            tableModel.setRowCount(0);
+            for (int i = 0; i < allVisitLogs.size(); i++) {
+                JsonObject log = allVisitLogs.get(i).getAsJsonObject();
+                var objs = new Object[] { log.get("visitTime").getAsString(),
+                log.get("studentId").getAsString(), log.get("studentName").getAsString(), log.get("studyProgram").getAsString(), log.get("purpose").getAsString() };
+                temp.add(objs);
+                tableModel.addRow(objs);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+        }
+    }
+
+    private void addEntry() {
+        try {
+            String query = String.format(
+                    "mutation { addVisitLog(studentName: \"%s\", studentId: \"%s\", studyProgram: \"%s\", purpose: \"%s\") { id } }",
+                    nameField.getText(),
+                    nimField.getText(),
+                    (String)studyProgramBox.getSelectedItem(),
+                    (String)purposeBox.getSelectedItem());
+            sendGraphQLRequest(query);
+
+            loadEntries();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+        }
+    }
+
+    private void updateEntry() {
+        try {
+            var selectedRow = visitTable.getSelectedRow();
+            if (selectedRow == -1) {
+                throw new Exception("No row selected");
+            }
+        
+            var id = ((VisitLog2)temp.get(selectedRow)).id;
+        
+            String query = String.format(
+                    "mutation { updateVisitLog(id: %s, studentName: \"%s\", studentId: \"%s\", studyProgram: \"%s\", purpose: \"%s\") { id studentName } }",
+                    id,
+                    nameField.getText(),
+                    nimField.getText(),
+                    (String)studyProgramBox.getSelectedItem(),
+                    (String)purposeBox.getSelectedItem());
+            sendGraphQLRequest(query);
+        
+            // reload here
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+        }
+    }
+
+    private void deleteEntry() {
+        try {
+            var selectedRow = visitTable.getSelectedRow();
+            if (selectedRow == -1) {
+                throw new Exception("No row selected");
+            }
+        
+            var id = ((VisitLog2)temp.get(selectedRow)).id;
+        
+            String query = String.format(
+                    "mutation { deleteVisitLog(id: %s) }",
+                    id);
+            sendGraphQLRequest(query);
+        
+            // reload here
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+        }
+    }
     
+    private static int col = 0;
     private void addActionColumns() {
+        if (col > 1) return;
+        ++col;
         tableModel.addColumn("Action");
 
         for (int i = 0; i < tableModel.getRowCount(); i++) {
-            tableModel.setValueAt("Action", i, tableModel.getColumnCount() - 2);
+            if (col == 1)
+                tableModel.setValueAt("Action", i, tableModel.getColumnCount() - 1);
+                else if (col == 2)
+                tableModel.setValueAt("Delete", i, tableModel.getColumnCount() - 1);
         }
 
         visitTable.getColumn("Action").setCellRenderer(new ButtonRenderer());
@@ -95,7 +217,37 @@ public class Mavenproject4 extends JFrame {
         visitTable.getColumn("Edit").setCellEditor(new ButtonEditor(new JCheckBox()));
     }
 
+    @SuppressWarnings("deprecation")
+    private String sendGraphQLRequest(String query) throws Exception {
+        String json = new Gson().toJson(new GraphQLQuery(query));
+        URL url = new URL("http://localhost:4567/graphql");
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("Content-Type", "application/json");
+        conn.setDoOutput(true);
+        try (OutputStream os = conn.getOutputStream()) {
+            os.write(json.getBytes());
+        }
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(conn.getInputStream()))) {
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null)
+                sb.append(line).append("\n");
+            return sb.toString();
+        }
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(Mavenproject4::new);
+    }
+
+    class GraphQLQuery {
+        @SuppressWarnings("unused")
+        String query;
+
+        GraphQLQuery(String query) {
+            this.query = query;
+        }
     }
 }

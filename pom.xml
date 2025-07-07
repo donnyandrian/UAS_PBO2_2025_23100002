@@ -11,4 +11,22 @@
         <maven.compiler.target>20</maven.compiler.target>
         <exec.mainClass>com.mycompany.mavenproject4.Mavenproject4</exec.mainClass>
     </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.graphql-java</groupId>
+            <artifactId>graphql-java</artifactId>
+            <version>21.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sparkjava</groupId>
+            <artifactId>spark-core</artifactId>
+            <version>2.9.4</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10.1</version>
+        </dependency>
+    </dependencies>
 </project>
