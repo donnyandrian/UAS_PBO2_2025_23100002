@@ -173,7 +173,7 @@ public class Mavenproject4 extends JFrame {
         
             String query = String.format(
                     "mutation { updateVisitLog(id: %s, studentName: \"%s\", studentId: \"%s\", studyProgram: \"%s\", purpose: \"%s\") { id studentName } }",
-                    id,
+                    ++id,
                     nameField.getText(),
                     nimField.getText(),
                     (String)studyProgramBox.getSelectedItem(),
@@ -199,7 +199,7 @@ public class Mavenproject4 extends JFrame {
         
             String query = String.format(
                     "mutation { deleteVisitLog(id: %s) }",
-                    id);
+                    ++id);
             sendGraphQLRequest(query);
         
             // reload here
