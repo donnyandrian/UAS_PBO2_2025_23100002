@@ -25,8 +25,9 @@ class ButtonEditor extends DefaultCellEditor {
         super(checkBox);
         button = new JButton();
         button.setOpaque(true);
-        button.addActionListener(e -> fireEditingStopped());
         button.addActionListener(e -> {
+            fireEditingStopped();
+
             System.out.println("test");
         });
     }

@@ -56,7 +56,7 @@ public class Mavenproject4 extends JFrame {
     
     private boolean actionColumnsAdded = false;
 
-    private List<Object> temp = new ArrayList<>();
+    private List<VisitLog2> temp = new ArrayList<>();
 
     public Mavenproject4() {
         setTitle("Library Visit Log");
@@ -86,6 +86,13 @@ public class Mavenproject4 extends JFrame {
         inputPanel.add(clearButton);
 
         addButton.addActionListener(e -> addEntry());
+        JButton editBtn = new JButton("Edit");
+        editBtn.addActionListener(e -> updateEntry());
+        JButton deleteBtn = new JButton("Delete");
+        deleteBtn.addActionListener(e -> deleteEntry());
+
+        inputPanel.add(editBtn);
+        inputPanel.add(deleteBtn);
 
         add(inputPanel, BorderLayout.NORTH);
 
@@ -131,7 +138,7 @@ public class Mavenproject4 extends JFrame {
                 JsonObject log = allVisitLogs.get(i).getAsJsonObject();
                 var objs = new Object[] { log.get("visitTime").getAsString(),
                 log.get("studentId").getAsString(), log.get("studentName").getAsString(), log.get("studyProgram").getAsString(), log.get("purpose").getAsString() };
-                temp.add(objs);
+                temp.add(new VisitLog2(i, log.get("studentName").getAsString(), log.get("studentId").getAsString(), log.get("studyProgram").getAsString(), log.get("purpose").getAsString(), log.get("visitTime").getAsString()));
                 tableModel.addRow(objs);
             }
         } catch (Exception e) {
