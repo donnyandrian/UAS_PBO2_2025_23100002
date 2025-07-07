@@ -181,6 +181,8 @@ public class Mavenproject4 extends JFrame {
             sendGraphQLRequest(query);
         
             // reload here
+            loadEntries();
+
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
         }
@@ -201,6 +203,8 @@ public class Mavenproject4 extends JFrame {
             sendGraphQLRequest(query);
         
             // reload here
+            loadEntries();
+
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
         }
